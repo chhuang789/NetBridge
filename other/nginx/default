@@ -1,0 +1,48 @@
+# Server configuration for NetBridgeLineBot with https (443 port) and use uWSGI protocol
+#
+server {
+    	listen 443 ssl http2;
+    	listen [::]:443 ssl http2;
+    	server_name netbridge.ciot.work;
+    	#root /var/www/html;
+	root /home/ubuntu/NetBridgeLineBot;
+    	ssl_certificate /home/ubuntu/.acme.sh/netbridge.ciot.work_ecc/fullchain.cer;
+    	ssl_certificate_key /home/ubuntu/.acme.sh/netbridge.ciot.work_ecc/netbridge.ciot.work.key;
+    	ssl_ecdh_curve X25519:secp384r1;
+    	ssl_session_cache shared:SSL:50m;
+    	ssl_session_timeout 1440m;
+    	ssl_session_tickets off;
+    	ssl_protocols TLSv1.2 TLSv1.3;
+    	ssl_ciphers TLS13-AES-256-GCM-SHA384:TLS13-CHACHA20-POLY1305-SHA256:TLS13-AES-128-GCM-SHA256:TLS13-AES-128-CCM-8-SHA256:TLS13-AES-128-CCM-SHA256:EECDH+CHACHA20:EECDH+CHACHA20-draft:EECDH+ECDSA+AES128:EECDH+aRSA+AES128:RSA+AES128:EECDH+ECDSA+AES256:EECDH+aRSA+AES256:RSA+AES256:EECDH+ECDSA+3DES:EECDH+aRSA+3DES:RSA+3DES:!MD5;
+    	ssl_prefer_server_ciphers on;
+    	ssl_stapling on;
+    	ssl_stapling_verify on;
+    	ssl_trusted_certificate /home/ubuntu/.acme.sh/netbridge.ciot.work_ecc/ca.cer;
+    	add_header Strict-Transport-Security "max-age=31536000; preload";
+
+	charset UTF-8;
+	access_log /var/log/nginx/netbridge_access.log;
+	error_log /var/log/nginx/netbridge_error.log;
+
+	location / {
+		try_files $uri $uri/ =404;
+
+                include uwsgi_params;
+		uwsgi_pass unix:/home/ubuntu/NetBridgeLineBot/NetBridgeLineBot.sock;
+	}
+
+
+        location /hello {
+                include uwsgi_params;
+                uwsgi_pass unix:/home/ubuntu/NetBridgeLineBot/NetBridgeLineBot.sock;
+	}
+
+	location /callback {
+                include uwsgi_params;
+                uwsgi_pass unix:/home/ubuntu/NetBridgeLineBot/NetBridgeLineBot.sock;
+	}
+
+	location /static {
+		alias /home/ubuntu/NetBridgeLineBot/static;
+	}
+}
